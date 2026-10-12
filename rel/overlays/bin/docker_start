@@ -1,4 +1,17 @@
 #!/bin/sh
+# Unraid and similar hosts run apps as PUID/PGID so their files belong to the shares' user. As root,
+# hand that user the paths the app writes, then run this script again as that user.
+if [ "$(id -u)" = "0" ] && [ -n "${PUID}" ]; then
+  PGID="${PGID:-${PUID}}"
+  # The release writes its runtime config under RELEASE_TMP at boot; /app stays root-owned.
+  export RELEASE_TMP=/tmp/pinchflat-release HOME=/config
+  mkdir -p "${RELEASE_TMP}" /config
+  chown -R "${PUID}:${PGID}" /config /etc/yt-dlp "${RELEASE_TMP}"
+  # yt-dlp updates itself by writing beside its binary.
+  chown "${PUID}:${PGID}" /downloads /usr/local/bin /usr/local/bin/yt-dlp
+  exec setpriv --reuid="${PUID}" --regid="${PGID}" --clear-groups "$0" "$@"
+fi
+
 /app/bin/check_file_permissions
 
 if [ $? -ne 0 ]; then
