@@ -306,7 +306,8 @@ defmodule Pinchflat.Reconciliation.PlanBuilderTest do
       _media_item = media_item_with_attachments(%{source_id: source.id}) |> add_stored_metadata()
       plan = create_plan(source.id)
 
-      stub_prediction(new_target_path())
+      # The series directory only resolves from a path with a Season folder
+      stub_prediction(series_style_path())
 
       assert {:ok, plan} = PlanBuilder.build_plan_items(plan)
 
