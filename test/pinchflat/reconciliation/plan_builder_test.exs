@@ -288,6 +288,33 @@ defmodule Pinchflat.Reconciliation.PlanBuilderTest do
       assert fetch_item(plan, :delete, "source_banner").from_path == banner
     end
 
+    test "plans deleting the source NFO instead of keeping it for a movie-style profile" do
+      profile = media_profile_fixture(%{download_nfo: true, nfo_style: :movie})
+      source = source_fixture(%{media_profile_id: profile.id})
+
+      series_dir =
+        Path.join(Application.get_env(:pinchflat, :media_directory), "movie-series-#{:rand.uniform(1_000_000)}")
+
+      nfo = Path.join(series_dir, "tvshow.nfo")
+      Pinchflat.Utils.FilesystemUtils.write_p!(nfo, "x")
+
+      {:ok, _} =
+        Pinchflat.Sources.update_source(source, %{series_directory: series_dir, nfo_filepath: nfo},
+          run_post_commit_tasks: false
+        )
+
+      _media_item = media_item_with_attachments(%{source_id: source.id}) |> add_stored_metadata()
+      plan = create_plan(source.id)
+
+      stub_prediction(new_target_path())
+
+      assert {:ok, plan} = PlanBuilder.build_plan_items(plan)
+
+      assert fetch_item(plan, :delete, "source_nfo").from_path == nfo
+      refute find_item(plan, :backfill, "source_nfo")
+      refute find_item(plan, :move, "source_nfo")
+    end
+
     test "schedules a source-image refresh when recorded artwork is missing on disk (online mode)" do
       {source, poster, _fanart} = source_with_partial_artwork()
       _media_item = media_item_with_attachments(%{source_id: source.id}) |> add_stored_metadata()

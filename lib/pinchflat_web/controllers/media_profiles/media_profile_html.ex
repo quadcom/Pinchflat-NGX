@@ -22,6 +22,13 @@ defmodule PinchflatWeb.MediaProfiles.MediaProfileHTML do
     ]
   end
 
+  def friendly_nfo_style_options do
+    [
+      {"TV episode (Plex, Jellyfin, Kodi shows)", :episode},
+      {"Movie (one item per video)", :movie}
+    ]
+  end
+
   def friendly_resolution_options do
     [
       {"8k", "4320p"},

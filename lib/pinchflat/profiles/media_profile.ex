@@ -22,6 +22,7 @@ defmodule Pinchflat.Profiles.MediaProfile do
     download_metadata
     embed_metadata
     download_nfo
+    nfo_style
     sponsorblock_mark_categories
     sponsorblock_remove_categories
     shorts_behaviour
@@ -58,6 +59,7 @@ defmodule Pinchflat.Profiles.MediaProfile do
     field :embed_metadata, :boolean, default: false
 
     field :download_nfo, :boolean, default: false
+    field :nfo_style, Ecto.Enum, values: ~w(episode movie)a, default: :episode
     field :sponsorblock_mark_categories, {:array, :string}, default: []
     field :sponsorblock_remove_categories, {:array, :string}, default: []
     # NOTE: these do NOT speed up indexing - the indexer still has to go
