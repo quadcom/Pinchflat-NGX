@@ -13,10 +13,17 @@ defmodule Pinchflat.Metadata.NfoBuilder do
   Builds an NFO file for a media item (read: single "episode") and
   stores it at the specified location.
 
+  The style is `:episode` (an `<episodedetails>` file, the default) or
+  `:movie` (a `<movie>` file, for libraries of standalone videos).
+
   Returns the filepath of the NFO file.
   """
-  def build_and_store_for_media_item(nfo_filepath, metadata) do
-    nfo = build_for_media_item(nfo_filepath, metadata)
+  def build_and_store_for_media_item(nfo_filepath, metadata, style \\ :episode) do
+    nfo =
+      case style do
+        :movie -> build_movie_for_media_item(metadata)
+        _ -> build_for_media_item(nfo_filepath, metadata)
+      end
 
     FilesystemUtils.write_p!(nfo_filepath, nfo)
 
@@ -60,6 +67,45 @@ defmodule Pinchflat.Metadata.NfoBuilder do
     </episodedetails>
     """
   end
+
+  defp build_movie_for_media_item(metadata) do
+    upload_date = MetadataFileHelpers.parse_upload_date(metadata["upload_date"])
+
+    # Optional elements are built as a list so an empty one leaves no blank line
+    lines =
+      [
+        "<title>#{safe(metadata["title"])}</title>",
+        "<plot>#{safe(metadata["description"])}</plot>",
+        "<premiered>#{safe(DateTime.to_date(upload_date))}</premiered>",
+        "<year>#{safe(upload_date.year)}</year>"
+      ] ++
+        studio_lines(metadata["uploader"]) ++
+        list_lines("genre", metadata["categories"]) ++
+        list_lines("tag", metadata["tags"]) ++
+        [~s(<uniqueid type="youtube" default="true">#{safe(metadata["id"])}</uniqueid>)]
+
+    body = Enum.map_join(lines, "\n", &("  " <> &1))
+
+    """
+    <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+    <movie>
+    #{body}
+    </movie>
+    """
+  end
+
+  defp studio_lines(uploader) when is_binary(uploader) and uploader != "", do: ["<studio>#{safe(uploader)}</studio>"]
+  defp studio_lines(_), do: []
+
+  # Drops blanks and case-insensitive duplicates, keeping the first spelling and the order
+  defp list_lines(element, values) when is_list(values) do
+    values
+    |> Enum.filter(&(is_binary(&1) and String.trim(&1) != ""))
+    |> Enum.uniq_by(&String.downcase/1)
+    |> Enum.map(&"<#{element}>#{safe(&1)}</#{element}>")
+  end
+
+  defp list_lines(_element, _values), do: []
 
   defp build_for_source(metadata) do
     """

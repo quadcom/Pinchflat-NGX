@@ -286,6 +286,16 @@
       />
     </section>
 
+    <section>
+      <.input
+        field={f[:nfo_style]}
+        options={friendly_nfo_style_options()}
+        type="select"
+        label="NFO style"
+        help="Movie style suits a library of single videos. Each video is its own item, with its YouTube categories as genres and its tags as tags."
+      />
+    </section>
+
     <section x-data="{ presets: { default: false, media_center: true, audio: false, archiving: true } }">
       <.input
         field={f[:download_source_images]}

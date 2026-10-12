@@ -388,7 +388,7 @@ defmodule Pinchflat.Reconciliation.PlanBuilder do
     end
   end
 
-  defp source_nfo_rows(plan, source, %{download_nfo: true}, series_directory) do
+  defp source_nfo_rows(plan, source, %{download_nfo: true, nfo_style: :episode}, series_directory) do
     current = source.nfo_filepath
     target = Path.join(series_directory, "tvshow.nfo")
 

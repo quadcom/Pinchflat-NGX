@@ -232,7 +232,7 @@ defmodule Pinchflat.Reconciliation.PlanApplier do
 
   defp backfill_media_item_attribute(media_item, %{attribute: "nfo"} = row) do
     with {:ok, metadata} <- read_stored_metadata(media_item) do
-      NfoBuilder.build_and_store_for_media_item(row.to_path, metadata)
+      NfoBuilder.build_and_store_for_media_item(row.to_path, metadata, media_item.source.media_profile.nfo_style)
       {:ok, %{nfo_filepath: row.to_path}}
     end
   end
